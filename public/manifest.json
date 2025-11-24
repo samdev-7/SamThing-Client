@@ -1,12 +1,12 @@
 {
-  "name": "Deskthing Lite Client",
-  "id": "litething",
-  "short_name": "LiteThing",
-  "description": "The Car Thing specific thin DeskThing client for use with DeskThing",
+  "name": "SamThing Client",
+  "id": "samthing",
+  "short_name": "SamThing",
+  "description": "Minimal boilerplate client for DeskThing server communication",
   "reactive": false,
-  "repository": "https://github.com/ItsRiprod/Deskthing-LiteClient/",
-  "author": "Riprod",
-  "version": "0.11.5",
+  "repository": "https://github.com/samdev-7/SamThing-Client/",
+  "author": "samdev-7",
+  "version": "0.0.1",
   "compatibility": {
     "server": ">=0.11.8",
     "app": ">=0.11.0"

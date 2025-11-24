@@ -1,9 +1,7 @@
 import { create } from 'zustand'
-import { WebSocketManager } from '../utils/websocketManager' 
+import { WebSocketManager } from '../utils/websocketManager'
 import { useSettingsStore } from './settingsStore'
-import { useMusicStore } from './musicStore'
-import { DeviceToDeskthingData, DeskThingToDeviceCore, DESKTHING_DEVICE, SongData } from '@deskthing/types'
-import { useClientStore } from './clientStore'
+import { DeviceToDeskthingData, DeskThingToDeviceCore } from '@deskthing/types'
 import { handleServerSocket } from '@src/utils/serverWebsocketHandler'
 
 /**
@@ -27,16 +25,18 @@ export interface WebSocketState {
   reconnect: () => void
   send: (message: DeviceToDeskthingData, important?: boolean) => Promise<void>
   addListener: (listener: (msg: DeskThingToDeviceCore & { app?: string }) => void) => () => void
-  once: (listenData: Partial<DeskThingToDeviceCore>, listener: (msg: DeskThingToDeviceCore & { app?: string }) => void | Promise<void>) => () => void
+  once: (
+    listenData: Partial<DeskThingToDeviceCore>,
+    listener: (msg: DeskThingToDeviceCore & { app?: string }) => void | Promise<void>
+  ) => () => void
   removeListener: (listener: (msg: DeskThingToDeviceCore & { app?: string }) => void) => void
 }
 
 export const useWebSocketStore = create<WebSocketState>((set, get) => {
-  
   const manifest = useSettingsStore.getState().manifest
-  const clientId = useClientStore.getState().client.clientId
-  let prevTrackName = ''
-  
+  // Generate a random clientId - server will update it during handshake
+  const clientId = `client-${Math.random().toString(36).substring(2, 15)}`
+
   let wsUrl: string | undefined = undefined
 
   if (manifest?.context?.ip && manifest?.context?.port) {
@@ -50,33 +50,17 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
   const manager = new WebSocketManager(clientId, wsUrl)
 
   manager.addStatusListener((status) => {
-    if (status == 'reconnecting') {
-      const pause = useMusicStore.getState().pause
-      pause()
-    }
     set({
       isConnected: status === 'connected',
       isReconnecting: status === 'reconnecting'
     })
   })
 
-  const handleSongData = (songData: SongData) => {
-    if (songData.track_name != undefined && songData.track_name !== prevTrackName) {
-      prevTrackName = songData.track_name
-      useMusicStore.getState().requestMusicData()
-    }
-    useMusicStore.getState().setSong({ ...songData, id: String(Date.now()) })
-  }
-
   const messageHandler = (socketData: DeskThingToDeviceCore & { app?: string }) => {
     if (socketData.app !== 'client') return
-
-    if (socketData.type == DESKTHING_DEVICE.MUSIC) {
-      handleSongData(socketData.payload)
-    }
     handleServerSocket(socketData)
   }
-  
+
   if (wsUrl) {
     manager.connect()
     manager.addListener(messageHandler)
@@ -94,13 +78,6 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
       manager.disconnect()
       wsUrl = newWsUrl
       manager.connect(newWsUrl)
-    }
-  })
-
-  useClientStore.subscribe((state) => {
-    if (state.client.clientId !== manager.getclientId()) {
-      console.log('status update to', state.client.clientId)
-      manager.setId(state.client.clientId)
     }
   })
 
@@ -144,7 +121,9 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
       }
     },
 
-    addListener: (listener: (msg: DeskThingToDeviceCore & { app?: string }) => void): (() => void) => {
+    addListener: (
+      listener: (msg: DeskThingToDeviceCore & { app?: string }) => void
+    ): (() => void) => {
       const manager = get().socketManager
       if (manager) {
         manager.addListener(listener)
@@ -152,13 +131,18 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
       return () => manager.removeListener(listener)
     },
 
-    once: (listenData: Partial<DeskThingToDeviceCore>, listener: (msg: DeskThingToDeviceCore & { app?: string }) => void | Promise<void>): (() => void) => {
+    once: (
+      listenData: Partial<DeskThingToDeviceCore>,
+      listener: (msg: DeskThingToDeviceCore & { app?: string }) => void | Promise<void>
+    ): (() => void) => {
       const manager = get().socketManager
 
       const wrappedListener = (msg: DeskThingToDeviceCore & { app?: string }) => {
-        if ((!listenData.type || msg.type === listenData.type) &&
-            (!listenData.request || msg.request === listenData.request) &&
-            (!listenData.app || msg.app === listenData.app)) {
+        if (
+          (!listenData.type || msg.type === listenData.type) &&
+          (!listenData.request || msg.request === listenData.request) &&
+          (!listenData.app || msg.app === listenData.app)
+        ) {
           listener(msg)
           manager.removeListener(wrappedListener)
         }

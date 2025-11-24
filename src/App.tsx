@@ -1,10 +1,9 @@
 import { HashRouter } from 'react-router-dom'
 import NavRouter from './components/nav/Router'
-import Overlays from './overlay'
 import { ButtonListener } from './components/ButtonListener'
+import { TimeUpdater } from './components/TimeUpdater'
 import ErrorBoundary from '@src/pages/error/ErrorBoundary'
 import { useEffect } from 'react'
-import { TimeUpdater } from './components/TimeUpdater'
 
 function App() {
   useEffect(() => {
@@ -23,9 +22,7 @@ function App() {
       <ErrorBoundary>
         <ButtonListener />
         <TimeUpdater />
-        <Overlays>
-          <NavRouter />
-        </Overlays>
+        <NavRouter />
       </ErrorBoundary>
     </HashRouter>
   )

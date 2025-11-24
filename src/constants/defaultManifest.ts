@@ -1,10 +1,10 @@
-import { ClientConnectionMethod, ClientManifest, ClientPlatformIDs } from "@deskthing/types";
+import { ClientConnectionMethod, ClientManifest, ClientPlatformIDs } from '@deskthing/types'
 
 export const defaultManifest: ClientManifest = {
-  name: '',
-  id: '',
-  short_name: '',
-  description: '',
+  name: 'SamThing',
+  id: 'samthing',
+  short_name: 'SamThing',
+  description: 'A streamlined client for phone-like devices',
   context: {
     method: ClientConnectionMethod.Unknown,
     id: ClientPlatformIDs.Unknown,
@@ -14,7 +14,7 @@ export const defaultManifest: ClientManifest = {
   },
   reactive: false,
   author: '',
-  version: '0.11.0',
+  version: '0.0.1',
   compatibility: {
     server: '>=0.11.0',
     app: '>=0.10.0'
